@@ -171,6 +171,16 @@ public class AccountService {
                 }
                 if (!ids.contains(account.getNicName())) {
                     return Result.No_such_account;
+                } else if (account.getToken() != null) {
+                    if (accountRepository.findByNicName(account.getNicName()).get().getToken().equals(account.getToken()) &
+                            (System.currentTimeMillis() - account.getTokenTime()) <= milliSecTo30Day) {
+                        return Result.Success;
+                    } else {
+                        String accToken = codeService.encode(codeService.encode(account.getNicName() + account.getPassword() + System.currentTimeMillis()));
+                        account.setToken(accToken);
+                        account.setTokenTime(System.currentTimeMillis());
+                        return Result.Success;
+                    }
                 } else if (accountRepository.findByNicName(account.getNicName()).get().getPassword().equals(codeService.encode(account.getPassword()))) {
                     String accToken = codeService.encode(codeService.encode(account.getNicName() + account.getPassword() + System.currentTimeMillis()));
                     account.setToken(accToken);
@@ -186,6 +196,7 @@ public class AccountService {
             return Result.No_such_user;
         }
     }
+
 
     public Result logOff(Account account, Long userId) {
         if (userRepository.findById(userId).isPresent()) {

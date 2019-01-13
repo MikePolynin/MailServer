@@ -65,24 +65,8 @@ public class User {
         return accounts;
     }
 
-    public void setAccounts(Set<Account> accounts) {
-        this.accounts = accounts;
-    }
-
-    public Long getId() {
-        return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
     public String getUserName() {
         return userName;
-    }
-
-    public void setUserName(String userName) {
-        this.userName = userName;
     }
 
     public String getPassword() {
@@ -111,9 +95,5 @@ public class User {
 
     public String getSecureWord() {
         return secureWord;
-    }
-
-    public void setSecureWord(String secureWord) {
-        this.secureWord = secureWord;
     }
 }

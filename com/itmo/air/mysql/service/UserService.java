@@ -33,7 +33,7 @@ public class UserService {
     @Autowired
     CodeService codeService;
 
-    Long msecTo30Day = 2592000000L;
+    Long milliSecTo30Day  = 2592000000L;
 
     public Page<User> findAll(Pageable pageable) {
         return userRepository.findAll(pageable);
@@ -117,7 +117,7 @@ public class UserService {
         if (userRepository.findByUserName(user.getUserName()).isPresent()) {
             if (user.getToken() != null) {
                 if (user.getToken().equals(userRepository.findByUserName(user.getUserName()).get().getToken()) &
-                        (System.currentTimeMillis() - user.getTokenTime()) >= msecTo30Day) {
+                        (System.currentTimeMillis() - user.getTokenTime()) <= milliSecTo30Day ) {
                     return Result.Success;
                 } else {
                     String token = codeService.encode(codeService.encode(user.getUserName() + user.getPassword() + System.currentTimeMillis()));

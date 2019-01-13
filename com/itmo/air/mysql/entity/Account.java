@@ -63,20 +63,8 @@ public class Account {
         return messages;
     }
 
-    public void setMessages(Set<Message> messages) {
-        this.messages = messages;
-    }
-
     public Long getId() {
         return id;
-    }
-
-    public void setId(Long id) {
-        this.id = id;
-    }
-
-    public User getUser() {
-        return user;
     }
 
     public void setUser(User user) {
