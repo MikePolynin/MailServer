@@ -41,13 +41,21 @@ public class Account {
 
     @Column(name = "tokenTime")
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    private Long tokenTime;
+    private long tokenTime;
 
-    public Long getTokenTime() {
+    public User getUser() {
+        return user;
+    }
+
+    public Set<Message> getMessages() {
+        return messages;
+    }
+
+    public long getTokenTime() {
         return tokenTime;
     }
 
-    public void setTokenTime(Long tokenTime) {
+    public void setTokenTime(long tokenTime) {
         this.tokenTime = tokenTime;
     }
 

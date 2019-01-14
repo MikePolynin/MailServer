@@ -33,8 +33,6 @@ public class UserService {
     @Autowired
     CodeService codeService;
 
-    Long milliSecTo30Day  = 2592000000L;
-
     public Page<User> findAll(Pageable pageable) {
         return userRepository.findAll(pageable);
     }
@@ -115,23 +113,40 @@ public class UserService {
 
     public Result logIn(User user) {
         if (userRepository.findByUserName(user.getUserName()).isPresent()) {
-            if (user.getToken() != null) {
-                if (user.getToken().equals(userRepository.findByUserName(user.getUserName()).get().getToken()) &
-                        (System.currentTimeMillis() - user.getTokenTime()) <= milliSecTo30Day ) {
-                    return Result.Success;
+            User newUser = userRepository.findByUserName(user.getUserName()).get();
+            if (user.getToken() == null) {
+                if (!newUser.getPassword().equals(codeService.encode(user.getPassword()))) {
+                    return Result.Wrong_password;
                 } else {
-                    String token = codeService.encode(codeService.encode(user.getUserName() + user.getPassword() + System.currentTimeMillis()));
-                    user.setToken(token);
-                    user.setTokenTime(System.currentTimeMillis());
+                    String token = codeService.encode(user.getUserName() + user.getPassword() + System.currentTimeMillis());
+                    newUser.setToken(token);
+                    newUser.setTokenTime(System.currentTimeMillis());
+                    userRepository.save(newUser);
                     return Result.Success;
                 }
-            } else if (userRepository.findByUserName(user.getUserName()).get().getPassword().equals(codeService.encode(user.getPassword()))) {
-                String token = codeService.encode(codeService.encode(user.getUserName() + user.getPassword() + System.currentTimeMillis()));
-                user.setToken(token);
-                user.setTokenTime(System.currentTimeMillis());
-                return Result.Success;
             } else {
-                return Result.Wrong_password;
+                if (user.getToken().equals(newUser.getToken())) {
+                    long milliSecToDay = 1000 * 60 * 60 * 24;
+                    if ((System.currentTimeMillis() - user.getTokenTime()) >= milliSecToDay) {
+                        return Result.Success;
+                    } else {
+                        String token = codeService.encode(user.getUserName() + user.getPassword() + System.currentTimeMillis());
+                        newUser.setToken(token);
+                        newUser.setTokenTime(System.currentTimeMillis());
+                        userRepository.save(newUser);
+                        return Result.Success;
+                    }
+                } else {
+                    if (!newUser.getPassword().equals(codeService.encode(user.getPassword()))) {
+                        return Result.Wrong_password;
+                    } else {
+                        String token = codeService.encode(user.getUserName() + user.getPassword() + System.currentTimeMillis());
+                        newUser.setToken(token);
+                        newUser.setTokenTime(System.currentTimeMillis());
+                        userRepository.save(newUser);
+                        return Result.Success;
+                    }
+                }
             }
         } else {
             return Result.No_such_user;

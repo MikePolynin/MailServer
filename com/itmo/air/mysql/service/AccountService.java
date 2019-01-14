@@ -26,7 +26,8 @@ public class AccountService {
         All_accounts_deleted,
         Success,
         Wrong_password,
-        Unauthorized_403, No_such_account
+        Unauthorized_403,
+        No_such_account
     }
 
     @Autowired
@@ -36,16 +37,14 @@ public class AccountService {
     @Autowired
     CodeService codeService;
 
-    Long milliSecTo30Day = 2592000000L;
-
     public Page<Account> findByUserId(Long userId, Pageable pageable) {
         return accountRepository.findByUserId(userId, pageable);
     }
 
     public Result createAccount(Long userId, String token, Account account) {
         if (userRepository.findById(userId).isPresent()) {
-            if (token.equals(userRepository.findById(userId).get().getToken())) {
-                User user = userRepository.findById(userId).get();
+            User user = userRepository.findById(userId).get();
+            if (token.equals(user.getToken())) {
                 if (!accountRepository.findByNicName(account.getNicName()).isPresent()) {
                     account.setPassword(codeService.encode(account.getPassword()));
                     account.setUser(user);
@@ -62,45 +61,23 @@ public class AccountService {
         }
     }
 
-    public Result change(Long userId, Long accountId, String secureWord, Account account) {
+    public Result change(Long userId, Long accountId, String secureWord, String token, Account account) {
         if (userRepository.findById(userId).isPresent()) {
             User newUser = userRepository.findById(userId).get();
-            List<Long> ids = new ArrayList<>();
-            for (Account acc : newUser.getAccounts()) {
-                ids.add(acc.getId());
-            }
-            if (!ids.contains(accountId)) {
-                return Result.No_such_account;
-            } else if (!newUser.getSecureWord().equals(secureWord)) {
-                return Result.Wrong_secureWord;
-            } else if (accountRepository.findById(accountId).isPresent()) {
-                Account newAccount = accountRepository.findById(accountId).get();
-                newAccount.setPassword(codeService.encode(account.getPassword()));
-                accountRepository.save(newAccount);
-                return Result.Password_changed;
-            } else {
-                return Result.No_such_account;
-            }
-        } else {
-            return Result.No_such_user;
-        }
-    }
-
-    public Result update(Long userId, Long accountId, Account account) {
-        if (userRepository.findById(userId).isPresent()) {
-            if (account.getToken().equals(accountRepository.findById(accountId).get().getToken())) {
-                User newUser = userRepository.findById(userId).get();
+            if (token.equals(newUser.getToken())) {
                 List<Long> ids = new ArrayList<>();
                 for (Account acc : newUser.getAccounts()) {
                     ids.add(acc.getId());
                 }
                 if (!ids.contains(accountId)) {
                     return Result.No_such_account;
+                } else if (!newUser.getSecureWord().equals(secureWord)) {
+                    return Result.Wrong_secureWord;
                 } else if (accountRepository.findById(accountId).isPresent()) {
                     Account newAccount = accountRepository.findById(accountId).get();
                     newAccount.setPassword(codeService.encode(account.getPassword()));
                     accountRepository.save(newAccount);
-                    return Result.Account_updated;
+                    return Result.Password_changed;
                 } else {
                     return Result.No_such_account;
                 }
@@ -112,10 +89,35 @@ public class AccountService {
         }
     }
 
+    public Result update(Long userId, Long accountId, Account account) {
+        if (userRepository.findById(userId).isPresent()) {
+            User newUser = userRepository.findById(userId).get();
+            Account newAccount = accountRepository.findById(accountId).get();
+            if (account.getToken().equals(newAccount.getToken())) {
+                List<Long> ids = new ArrayList<>();
+                for (Account acc : newUser.getAccounts()) {
+                    ids.add(acc.getId());
+                }
+                if (!ids.contains(accountId)) {
+                    return Result.No_such_account;
+                } else {
+                    newAccount.setPassword(codeService.encode(account.getPassword()));
+                    accountRepository.save(newAccount);
+                    return Result.Account_updated;
+                }
+            } else {
+                return Result.Unauthorized_403;
+            }
+        } else {
+            return Result.No_such_user;
+        }
+    }
+
     public Result delete(Long userId, Long accountId, Account account, String secureWord) {
         if (userRepository.findById(userId).isPresent()) {
-            if (account.getToken().equals(accountRepository.findById(accountId).get().getToken())) {
-                User newUser = userRepository.findById(userId).get();
+            User newUser = userRepository.findById(userId).get();
+            Account newAccount = accountRepository.findById(accountId).get();
+            if (account.getToken().equals(newAccount.getToken())) {
                 List<Long> ids = new ArrayList<>();
                 for (Account acc : newUser.getAccounts()) {
                     ids.add(acc.getId());
@@ -124,13 +126,10 @@ public class AccountService {
                     return Result.No_such_account;
                 } else if (!newUser.getSecureWord().equals(secureWord)) {
                     return Result.Wrong_secureWord;
-                } else if (accountRepository.findById(accountId).isPresent()) {
-                    Account newAccount = accountRepository.findById(accountId).get();
+                } else {
                     newUser.getAccounts().remove(newAccount);
                     accountRepository.delete(newAccount);
                     return Result.Account_deleted;
-                } else {
-                    return Result.No_such_account;
                 }
             } else {
                 return Result.Unauthorized_403;
@@ -161,33 +160,52 @@ public class AccountService {
         }
     }
 
-    public Result logIn(Long userId, String token, Account account) {
+    public Result logIn(Long userId, String checkToken, Account account) {
         if (userRepository.findById(userId).isPresent()) {
-            if (userRepository.findById(userId).get().getToken().equals(token)) {
-                User newUser = userRepository.findById(userId).get();
+            User newUser = userRepository.findById(userId).get();
+            if (newUser.getToken().equals(checkToken)) {
                 List<String> ids = new ArrayList<>();
                 for (Account acc : newUser.getAccounts()) {
                     ids.add(acc.getNicName());
                 }
                 if (!ids.contains(account.getNicName())) {
                     return Result.No_such_account;
-                } else if (account.getToken() != null) {
-                    if (accountRepository.findByNicName(account.getNicName()).get().getToken().equals(account.getToken()) &
-                            (System.currentTimeMillis() - account.getTokenTime()) <= milliSecTo30Day) {
-                        return Result.Success;
-                    } else {
-                        String accToken = codeService.encode(codeService.encode(account.getNicName() + account.getPassword() + System.currentTimeMillis()));
-                        account.setToken(accToken);
-                        account.setTokenTime(System.currentTimeMillis());
-                        return Result.Success;
-                    }
-                } else if (accountRepository.findByNicName(account.getNicName()).get().getPassword().equals(codeService.encode(account.getPassword()))) {
-                    String accToken = codeService.encode(codeService.encode(account.getNicName() + account.getPassword() + System.currentTimeMillis()));
-                    account.setToken(accToken);
-                    account.setTokenTime(System.currentTimeMillis());
-                    return Result.Success;
                 } else {
-                    return Result.Wrong_password;
+                    Account newAccount = accountRepository.findByNicName(account.getNicName()).get();
+                    if (account.getToken() == null) {
+                        if (!newAccount.getPassword().equals(codeService.encode(account.getPassword()))) {
+                            return Result.Wrong_password;
+                        } else {
+                            String token = codeService.encode(account.getNicName() + account.getPassword() + System.currentTimeMillis());
+                            newAccount.setToken(token);
+                            newAccount.setTokenTime(System.currentTimeMillis());
+                            accountRepository.save(newAccount);
+                            return Result.Success;
+                        }
+                    } else {
+                        if (account.getToken().equals(newAccount.getToken())) {
+                            long milliSecToDay = 1000 * 60 * 60 * 24;
+                            if ((System.currentTimeMillis() - account.getTokenTime()) >= milliSecToDay) {
+                                return Result.Success;
+                            } else {
+                                String token = codeService.encode(account.getNicName() + account.getPassword() + System.currentTimeMillis());
+                                newAccount.setToken(token);
+                                newAccount.setTokenTime(System.currentTimeMillis());
+                                accountRepository.save(newAccount);
+                                return Result.Success;
+                            }
+                        } else {
+                            if (!newAccount.getPassword().equals(codeService.encode(account.getPassword()))) {
+                                return Result.Wrong_password;
+                            } else {
+                                String token = codeService.encode(account.getNicName() + account.getPassword() + System.currentTimeMillis());
+                                newAccount.setToken(token);
+                                newAccount.setTokenTime(System.currentTimeMillis());
+                                accountRepository.save(newAccount);
+                                return Result.Success;
+                            }
+                        }
+                    }
                 }
             } else {
                 return Result.Unauthorized_403;

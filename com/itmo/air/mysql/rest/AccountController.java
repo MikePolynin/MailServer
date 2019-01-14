@@ -22,7 +22,7 @@ public class AccountController {
         return accountService.findByUserId(userId, pageable);
     }
 
-    @PostMapping("/users/{userId}/accounts/login")
+    @PutMapping("/users/{userId}/accounts/login")
     public String logIn(@PathVariable(value = "userId") Long userId,
                         @RequestHeader(value = "token") String token,
                         @Valid @RequestBody Account account) {
@@ -124,8 +124,9 @@ public class AccountController {
     public String changePassword(@PathVariable(value = "userId") Long userId,
                                  @PathVariable(value = "accountId") Long accountId,
                                  @RequestHeader(value = "secureWord") String secureWord,
+                                 @RequestHeader(value = "token") String token,
                                  @Valid @RequestBody Account account) {
-        AccountService.Result result = accountService.change(userId, accountId, secureWord, account);
+        AccountService.Result result = accountService.change(userId, accountId, secureWord, token, account);
         switch (result) {
             case No_such_user:
                 return "No such user";

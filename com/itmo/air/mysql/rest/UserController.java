@@ -21,7 +21,7 @@ public class UserController {
         return userService.findAll(pageable);
     }
 
-    @PostMapping("/users/login")
+    @PutMapping("/users/login")
     public String logIn(@Valid @RequestBody User user) {
         UserService.Result result = userService.logIn(user);
         switch (result) {
@@ -36,7 +36,7 @@ public class UserController {
         }
     }
 
-    @PostMapping("/users/{userId}")
+    @PutMapping("/users/{userId}")
     public String logOff(@Valid @RequestBody User user) {
         UserService.Result result = userService.logOff(user);
         switch (result) {
