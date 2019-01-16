@@ -1,43 +1,27 @@
 package com.itmo.air.mysql.rest;
 
 import com.itmo.air.mysql.entity.Account;
+import com.itmo.air.mysql.entity.GettingMessages;
 import com.itmo.air.mysql.entity.Message;
-import com.itmo.air.mysql.repo.AccountRepository;
 import com.itmo.air.mysql.service.MessageService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.*;
 
 import javax.validation.Valid;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.HashSet;
-import java.util.Set;
 
 @RestController
 public class MessageController {
 
     @Autowired
     MessageService messageService;
-    @Autowired
-    AccountRepository accountRepository;
 
     @GetMapping("/users/{usersId}/accounts/{accountId}/messages")
-    public Set<Message> getMessagesByAccountId(@PathVariable(value = "userId") Long userId,
-                                               @RequestHeader(value = "token") String userToken,
-                                               @Valid @RequestBody Account account,
-                                               Pageable pageable) {
-        MessageService.Result result = messageService.findMessagesByAccountId(userId, userToken, account, pageable);
-        switch (result) {
-            case Success:
-                return accountRepository.findByNicName(account.getNicName()).get().getMessages(pageable);
-            case No_such_account:
-                return "No such account";
-            case No_such_user:
-                return "No such user";
-            case Unauthorized_403:
-                return "Error 403. Unauthorized";
-        }
+    public GettingMessages getMessagesByAccountId(@PathVariable(value = "userId") Long userId,
+                                                  @RequestHeader(value = "token") String userToken,
+                                                  @Valid @RequestBody Account account,
+                                                  Pageable pageable) {
+        return messageService.findMessagesByAccountId(userId, userToken, account, pageable);
     }
 
     @PostMapping("/users/{usersId}/accounts/{accountId}/messages/create")

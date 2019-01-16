@@ -1,6 +1,7 @@
 package com.itmo.air.mysql.service;
 
 import com.itmo.air.mysql.entity.Account;
+import com.itmo.air.mysql.entity.GettingMessages;
 import com.itmo.air.mysql.entity.Message;
 import com.itmo.air.mysql.entity.User;
 import com.itmo.air.mysql.repo.AccountRepository;
@@ -12,7 +13,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 @Component
 public class MessageService {
@@ -22,7 +22,6 @@ public class MessageService {
         No_such_recipient,
         Message_has_been_sent,
         No_such_account,
-        Success,
         Unauthorized_403,
         No_such_user
     }
@@ -34,7 +33,7 @@ public class MessageService {
     @Autowired
     UserRepository userRepository;
 
-    public Result findMessagesByAccountId(Long userId, String userToken, Account account, Pageable pageable) {
+    public GettingMessages findMessagesByAccountId(Long userId, String userToken, Account account, Pageable pageable) {
         if (userRepository.findById(userId).isPresent()) {
             User newUser = userRepository.findById(userId).get();
             if (newUser.getToken().equals(userToken)) {
@@ -43,20 +42,30 @@ public class MessageService {
                     ids.add(acc.getNicName());
                 }
                 if (!ids.contains(account.getNicName())) {
-                    return Result.No_such_account;
+                    GettingMessages gettingMessages = new GettingMessages();
+                    gettingMessages.setErrors("No such account");
+                    return gettingMessages;
                 } else {
                     Account newAccount = accountRepository.findById(account.getId()).get();
                     if (newAccount.getToken().equals(account.getToken())) {
-                        return Result.Success;
+                        GettingMessages gettingMessages = new GettingMessages();
+                        gettingMessages.setMessages(newAccount.getMessages(pageable));
+                        return gettingMessages;
                     } else {
-                        return Result.Unauthorized_403;
+                        GettingMessages gettingMessages = new GettingMessages();
+                        gettingMessages.setErrors("Error 403. Unauthorized");
+                        return gettingMessages;
                     }
                 }
             } else {
-                return Result.Unauthorized_403;
+                GettingMessages gettingMessages = new GettingMessages();
+                gettingMessages.setErrors("Error 403. Unauthorized");
+                return gettingMessages;
             }
         } else {
-            return Result.No_such_user;
+            GettingMessages gettingMessages = new GettingMessages();
+            gettingMessages.setErrors("No such user");
+            return gettingMessages;
         }
     }
 

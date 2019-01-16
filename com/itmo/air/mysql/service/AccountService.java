@@ -1,11 +1,11 @@
 package com.itmo.air.mysql.service;
 
 import com.itmo.air.mysql.entity.Account;
+import com.itmo.air.mysql.entity.GettingAccounts;
 import com.itmo.air.mysql.entity.User;
 import com.itmo.air.mysql.repo.AccountRepository;
 import com.itmo.air.mysql.repo.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
@@ -37,8 +37,16 @@ public class AccountService {
     @Autowired
     CodeService codeService;
 
-    public Page<Account> findByUserId(Long userId, Pageable pageable) {
-        return accountRepository.findByUserId(userId, pageable);
+    public GettingAccounts findByUserId(Long userId, Pageable pageable) {
+        if (userRepository.findById(userId).isPresent()) {
+            GettingAccounts gettingAccounts = new GettingAccounts();
+            gettingAccounts.setAccounts(accountRepository.findByUserId(userId, pageable));
+            return gettingAccounts;
+        } else {
+            GettingAccounts gettingAccounts = new GettingAccounts();
+            gettingAccounts.setErrors("No such user");
+            return gettingAccounts;
+        }
     }
 
     public Result createAccount(Long userId, String token, Account account) {
