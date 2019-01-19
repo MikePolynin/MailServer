@@ -1,6 +1,7 @@
 package com.itmo.air.mysql.rest;
 
 import com.itmo.air.mysql.entity.Account;
+import com.itmo.air.mysql.entity.GettingAccounts;
 import com.itmo.air.mysql.entity.User;
 import com.itmo.air.mysql.service.AccountService;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -17,8 +18,8 @@ public class AccountController {
     AccountService accountService;
 
     @GetMapping("/users/{userId}/accounts")
-    public Page<Account> getAllAccountsByUserId(@PathVariable(value = "userId") Long userId,
-                                                Pageable pageable) {
+    public GettingAccounts getAllAccountsByUserId(@PathVariable(value = "userId") Long userId,
+                                                  Pageable pageable) {
         return accountService.findByUserId(userId, pageable);
     }
 
