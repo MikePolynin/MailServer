@@ -45,6 +45,20 @@ public class User {
     @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
     private long tokenTime;
 
+    public Set<Role> getRoles() {
+        return roles;
+    }
+
+    public void setRoles(Set<Role> roles) {
+        this.roles = roles;
+    }
+
+    @ManyToMany
+    @JoinTable(name = "usersRoles",
+            joinColumns = @JoinColumn(name = "roleId", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "userId", referencedColumnName = "id"))
+    private Set<Role> roles;
+
     public Long getId() {
         return id;
     }

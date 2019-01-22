@@ -25,9 +25,8 @@ public class AccountController {
 
     @PutMapping("/users/{userId}/accounts/login")
     public String logIn(@PathVariable(value = "userId") Long userId,
-                        @RequestHeader(value = "token") String token,
                         @Valid @RequestBody Account account) {
-        AccountService.Result result = accountService.logIn(userId, token, account);
+        AccountService.Result result = accountService.logIn(userId, account);
         switch (result) {
             case Wrong_password:
                 return "Wrong account password";
@@ -37,8 +36,6 @@ public class AccountController {
                 return "Success";
             case No_such_user:
                 return "No such user";
-            case Unauthorized_403:
-                return "Error 403. Unauthorized";
             default:
                 return "Unknown error 503";
         }
@@ -47,7 +44,7 @@ public class AccountController {
     @PutMapping("/users/{userId}/accounts/{accountId}")
     public String logOff(@PathVariable(value = "userId") Long userId,
                          @Valid @RequestBody Account account) {
-        AccountService.Result result = accountService.logOff(account, userId);
+        AccountService.Result result = accountService.logOff(userId, account);
         switch (result) {
             case Success:
                 return "Success";
@@ -55,8 +52,6 @@ public class AccountController {
                 return "No such user";
             case No_such_account:
                 return "No such account";
-            case Unauthorized_403:
-                return "Error 403. Unauthorized";
             default:
                 return "Unknown error 503";
         }
@@ -64,14 +59,11 @@ public class AccountController {
 
     @PostMapping("/users/{userId}/accounts")
     public String createAccount(@PathVariable(value = "userId") Long userId,
-                                @RequestHeader(value = "token") String token,
                                 @Valid @RequestBody Account account) {
-        AccountService.Result result = accountService.createAccount(userId, token, account);
+        AccountService.Result result = accountService.createAccount(userId, account);
         switch (result) {
             case No_such_user:
                 return "No such user";
-            case Unauthorized_403:
-                return "Error 403. Unauthorized";
             case Account_created:
                 return "Account created";
             case Account_already_exist:
@@ -84,9 +76,8 @@ public class AccountController {
     @DeleteMapping("/users/{userId}/accounts/{accountId}/delete")
     public String deleteAccount(@PathVariable(value = "userId") Long userId,
                                 @PathVariable(value = "accountId") Long accountId,
-                                @RequestHeader(value = "secureWord") String secureWord,
-                                @Valid @RequestBody Account account) {
-        AccountService.Result result = accountService.delete(userId, accountId, account, secureWord);
+                                @RequestHeader(value = "secureWord") String secureWord) {
+        AccountService.Result result = accountService.delete(userId, accountId, secureWord);
         switch (result) {
             case No_such_user:
                 return "No such user";
@@ -94,8 +85,6 @@ public class AccountController {
                 return "No such account";
             case Wrong_secureWord:
                 return "Wrong secure word";
-            case Unauthorized_403:
-                return "Error 403. Unauthorized";
             case Account_deleted:
                 return "Account deleted";
             default:
@@ -112,8 +101,6 @@ public class AccountController {
                 return "No such user";
             case Wrong_secureWord:
                 return "Wrong secure word";
-            case Unauthorized_403:
-                return "Error 403. Unauthorized";
             case All_accounts_deleted:
                 return "All user`s accounts deleted";
             default:
@@ -125,9 +112,8 @@ public class AccountController {
     public String changePassword(@PathVariable(value = "userId") Long userId,
                                  @PathVariable(value = "accountId") Long accountId,
                                  @RequestHeader(value = "secureWord") String secureWord,
-                                 @RequestHeader(value = "token") String token,
                                  @Valid @RequestBody Account account) {
-        AccountService.Result result = accountService.change(userId, accountId, secureWord, token, account);
+        AccountService.Result result = accountService.change(userId, accountId, secureWord, account);
         switch (result) {
             case No_such_user:
                 return "No such user";
@@ -152,8 +138,6 @@ public class AccountController {
                 return "No such user";
             case No_such_account:
                 return "No such account";
-            case Unauthorized_403:
-                return "Error 403. Unauthorized";
             case Account_updated:
                 return "Account information successfully updated";
             default:

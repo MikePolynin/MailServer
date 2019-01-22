@@ -23,7 +23,6 @@ public class UserService {
         Success,
         Wrong_password,
         User_deleted,
-        Unauthorized_403
     }
 
     @Autowired
@@ -72,18 +71,14 @@ public class UserService {
     public Result update(Long userId, User user) {
         if (userRepository.findById(userId).isPresent()) {
             User newUser = userRepository.findById(userId).get();
-            if (user.getToken().equals(newUser.getToken())) {
-                if (!newUser.getUserName().equals(user.getUserName())) {
-                    return Result.No_such_user;
-                } else {
-                    newUser.setFirstName(user.getFirstName());
-                    newUser.setLastName(user.getLastName());
-                    newUser.setPassword(codeService.encode(user.getPassword()));
-                    userRepository.save(newUser);
-                    return Result.User_updated;
-                }
+            if (!newUser.getUserName().equals(user.getUserName())) {
+                return Result.No_such_user;
             } else {
-                return Result.Unauthorized_403;
+                newUser.setFirstName(user.getFirstName());
+                newUser.setLastName(user.getLastName());
+                newUser.setPassword(codeService.encode(user.getPassword()));
+                userRepository.save(newUser);
+                return Result.User_updated;
             }
         } else {
             return Result.No_such_user;
@@ -93,18 +88,14 @@ public class UserService {
     public Result delete(Long userId, User user) {
         if (userRepository.findById(userId).isPresent()) {
             User newUser = userRepository.findById(userId).get();
-            if (user.getToken().equals(newUser.getToken())) {
-                if (!newUser.getUserName().equals(user.getUserName())) {
-                    return Result.No_such_user;
-                } else if (!newUser.getSecureWord().equals(user.getSecureWord())) {
-                    return Result.Wrong_secureWord;
-                } else {
-                    newUser.getAccounts().clear();
-                    userRepository.delete(newUser);
-                    return Result.User_deleted;
-                }
+            if (!newUser.getUserName().equals(user.getUserName())) {
+                return Result.No_such_user;
+            } else if (!newUser.getSecureWord().equals(user.getSecureWord())) {
+                return Result.Wrong_secureWord;
             } else {
-                return Result.Unauthorized_403;
+                newUser.getAccounts().clear();
+                userRepository.delete(newUser);
+                return Result.User_deleted;
             }
         } else {
             return Result.No_such_user;
@@ -156,12 +147,8 @@ public class UserService {
     public Result logOff(User user) {
         if (userRepository.findByUserName(user.getUserName()).isPresent()) {
             User newUser = userRepository.findByUserName(user.getUserName()).get();
-            if (user.getToken().equals(newUser.getToken())) {
-                user.setToken(null);
-                return Result.Success;
-            } else {
-                return Result.Unauthorized_403;
-            }
+            user.setToken(null);
+            return Result.Success;
         } else {
             return Result.No_such_user;
         }
