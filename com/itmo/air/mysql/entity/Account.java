@@ -1,13 +1,11 @@
 package com.itmo.air.mysql.entity;
 
 import com.fasterxml.jackson.annotation.JsonBackReference;
-import com.fasterxml.jackson.annotation.JsonProperty;
 import org.springframework.data.domain.Pageable;
 
 import javax.persistence.*;
-import java.util.HashSet;
-import java.util.Set;
-
+import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "accounts")
@@ -20,55 +18,42 @@ public class Account {
     @Column(unique = true, nullable = false, updatable = false, name = "nic_name")
     private String nicName;
 
-    @Column(nullable = false, name = "password")
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    private String password;
-
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     @JsonBackReference
     private User user;
 
+    @Column(nullable = false, updatable = false, name = "userName")
+    private String userName;
+
+    @Column(nullable = false, name = "deleted")
+    private int deleted;
+
     @ManyToMany
     @JoinTable(name = "accountsMessages",
-            joinColumns = @JoinColumn(name = "messageId", referencedColumnName = "id"),
-            inverseJoinColumns = @JoinColumn(name = "accountId", referencedColumnName = "id"))
-    private Set<Message> messages = new HashSet<>();
+            joinColumns = @JoinColumn(name = "accountId", referencedColumnName = "id"),
+            inverseJoinColumns = @JoinColumn(name = "messageId", referencedColumnName = "id"))
+    private List<Message> messages = new ArrayList<>();
 
-    @Column(name = "token")
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    private String token;
+    public void setId(Long id) {
+        this.id = id;
+    }
 
-    @Column(name = "tokenTime")
-    @JsonProperty(access = JsonProperty.Access.WRITE_ONLY)
-    private long tokenTime;
 
     public User getUser() {
         return user;
     }
 
-    public Set<Message> getMessages() {
+    public List<Message> getMessages() {
         return messages;
     }
 
-    public long getTokenTime() {
-        return tokenTime;
-    }
-
-    public void setTokenTime(long tokenTime) {
-        this.tokenTime = tokenTime;
-    }
-
-    public String getToken() {
-        return token;
-    }
-
-    public void setToken(String token) {
-        this.token = token;
-    }
-
-    public Set<Message> getMessages(Pageable pageable) {
+    public List<Message> getMessages(Pageable pageable) {
         return messages;
+    }
+
+    public void setMessages(List<Message> messages) {
+        this.messages = messages;
     }
 
     public Long getId() {
@@ -87,11 +72,19 @@ public class Account {
         this.nicName = nicName;
     }
 
-    public String getPassword() {
-        return password;
+    public String getUserName() {
+        return userName;
     }
 
-    public void setPassword(String password) {
-        this.password = password;
+    public void setUserName(String userName) {
+        this.userName = userName;
+    }
+
+    public int getDeleted() {
+        return deleted;
+    }
+
+    public void setDeleted(int deleted) {
+        this.deleted = deleted;
     }
 }

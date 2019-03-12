@@ -1,8 +1,8 @@
 package com.itmo.air.mysql.entity;
 
+import com.fasterxml.jackson.annotation.JsonBackReference;
+
 import javax.persistence.*;
-import java.util.HashSet;
-import java.util.Set;
 
 @Entity(name = "roles")
 public class Role {
@@ -10,9 +10,6 @@ public class Role {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
-
-    @Column(name = "name")
-    private String name;
 
     public Long getId() {
         return id;
@@ -22,6 +19,9 @@ public class Role {
         this.id = id;
     }
 
+    @Column(name = "name")
+    private String name;
+
     public String getName() {
         return name;
     }
@@ -30,14 +30,16 @@ public class Role {
         this.name = name;
     }
 
-    public Set<User> getUsers() {
-        return users;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id", nullable = false)
+    @JsonBackReference
+    private User user;
+
+    public User getUser() {
+        return user;
     }
 
-    public void setUsers(Set<User> users) {
-        this.users = users;
+    public void setUser(User user) {
+        this.user = user;
     }
-
-    @ManyToMany(fetch = FetchType.LAZY, mappedBy = "roles")
-    private Set<User> users = new HashSet<>();
 }

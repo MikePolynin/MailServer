@@ -1,109 +1,38 @@
 package com.itmo.air.mysql.service;
 
-import com.itmo.air.mysql.entity.Account;
-import com.itmo.air.mysql.entity.GettingMessages;
 import com.itmo.air.mysql.entity.Message;
-import com.itmo.air.mysql.entity.User;
 import com.itmo.air.mysql.repo.AccountRepository;
 import com.itmo.air.mysql.repo.MessageRepository;
-import com.itmo.air.mysql.repo.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 
 @Component
 public class MessageService {
 
-    public enum Result {
-        Wrong_sender,
-        No_such_recipient,
-        Message_has_been_sent,
-        No_such_account,
-        Unauthorized_403,
-        No_such_user
-    }
-
     @Autowired
     MessageRepository messageRepository;
     @Autowired
     AccountRepository accountRepository;
-    @Autowired
-    UserRepository userRepository;
 
-    public GettingMessages findMessagesByAccountId(Long userId, String userToken, Account account, Pageable pageable) {
-        if (userRepository.findById(userId).isPresent()) {
-            User newUser = userRepository.findById(userId).get();
-            if (newUser.getToken().equals(userToken)) {
-                List<String> ids = new ArrayList<>();
-                for (Account acc : newUser.getAccounts()) {
-                    ids.add(acc.getNicName());
-                }
-                if (!ids.contains(account.getNicName())) {
-                    GettingMessages gettingMessages = new GettingMessages();
-                    gettingMessages.setErrors("No such account");
-                    return gettingMessages;
-                } else {
-                    Account newAccount = accountRepository.findById(account.getId()).get();
-                    if (newAccount.getToken().equals(account.getToken())) {
-                        GettingMessages gettingMessages = new GettingMessages();
-                        gettingMessages.setMessages(newAccount.getMessages(pageable));
-                        return gettingMessages;
-                    } else {
-                        GettingMessages gettingMessages = new GettingMessages();
-                        gettingMessages.setErrors("Error 403. Unauthorized");
-                        return gettingMessages;
-                    }
-                }
-            } else {
-                GettingMessages gettingMessages = new GettingMessages();
-                gettingMessages.setErrors("Error 403. Unauthorized");
-                return gettingMessages;
-            }
-        } else {
-            GettingMessages gettingMessages = new GettingMessages();
-            gettingMessages.setErrors("No such user");
-            return gettingMessages;
+    public List<Message> getMessages(String nicName) {
+        List<Message> reverseMessages = new ArrayList<>();
+        List<Message> messages = new ArrayList<>(accountRepository.findByNicName(nicName).get().getMessages());
+        for (int i = 1; i <= messages.size(); i++) {
+            reverseMessages.add(messages.get(messages.size() - i));
         }
+        return reverseMessages;
     }
 
-    public Result createMessage(Long userId, Long accountId, String userToken, String accountToken, String nicName, Message message, Pageable pageable) {
-        if (userRepository.findById(userId).isPresent()) {
-            User newUser = userRepository.findById(userId).get();
-            if (newUser.getToken().equals(userToken)) {
-                List<String> ids = new ArrayList<>();
-                for (Account acc : newUser.getAccounts()) {
-                    ids.add(acc.getNicName());
-                }
-                if (!ids.contains(nicName)) {
-                    return Result.No_such_account;
-                } else {
-                    Account newAccount = accountRepository.findById(accountId).get();
-                    if (newAccount.getToken().equals(accountToken)) {
-                        if (!newAccount.getNicName().equals(message.getFrom())) {
-                            return Result.Wrong_sender;
-                        } else {
-                            for (String rec : message.getTo()) {
-                                if (!accountRepository.findByNicName(rec).isPresent()) {
-                                    return Result.No_such_recipient;
-                                } else {
-                                    accountRepository.findByNicName(rec).get().getMessages(pageable).add(message);
-                                }
-                            }
-                            messageRepository.save(message);
-                            return Result.Message_has_been_sent;
-                        }
-                    } else {
-                        return Result.Unauthorized_403;
-                    }
-                }
-            } else {
-                return Result.Unauthorized_403;
-            }
-        } else {
-            return Result.No_such_user;
+    public void sendMessage(Message message, String nicName) {
+        message.setFrom(nicName);
+        HashSet<String> recipients = message.getTo();
+        for (String recipient : recipients) {
+            accountRepository.findByNicName(recipient).get().getMessages().add(message);
         }
+        messageRepository.save(message);
     }
 }

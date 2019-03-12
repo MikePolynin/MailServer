@@ -7,6 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
 import java.util.Optional;
+import java.util.Set;
 
 @Repository
 public interface AccountRepository extends JpaRepository<Account, Long> {
@@ -14,4 +15,6 @@ public interface AccountRepository extends JpaRepository<Account, Long> {
     Page<Account> findByUserId(Long userId, Pageable pageable);
 
     Optional<Account> findByNicName(String nicName);
+
+    Set<Account> findByUserName(String userName);
 }
